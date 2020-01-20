@@ -1,11 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, precision_score, classification_report
-from feature_engineering import _get_train_test_data
+from feature_engineering import get_train_test_data
 import scikitplot as skplt
+import pandas as pd
+from feature_engine.categorical_encoders import MeanCategoricalEncoder
+from feature_engine.categorical_encoders import RareLabelCategoricalEncoder
+from sklearn.feature_selection import RFE
+
+lag = 3  # How many months to train on?
 
 
-def train_models(ModelClass, invoices, observation_end_dates, **kwargs):
+def train_models(ModelClass, invoices, observation_end_dates, rfe=False, **kwargs):
     train_results = dict(
         models=[],
         observation_end_dates=observation_end_dates,
@@ -14,15 +20,39 @@ def train_models(ModelClass, invoices, observation_end_dates, **kwargs):
         X_test=[],
         y_test=[],
     )
+    X_trains, y_trains = [], [],
 
     for observation_end_date in observation_end_dates:
-        X_train, y_train, X_test, y_test = _get_train_test_data(invoices, observation_end_date)
-        model = ModelClass(**kwargs)
-        model.fit(X_train, y_train)
+        X_train, y_train, X_test, y_test = get_train_test_data(invoices, observation_end_date)
+        X_trains.append(X_train)
+        y_trains.append(y_train)
+        X_train, y_train = pd.concat(X_trains[-lag:]).reset_index(drop=True), pd.concat(y_trains[-lag:]).reset_index(
+            drop=True).astype(int)
+        X_test, y_test = X_test.reset_index(drop=True), y_test.reset_index(drop=True).astype(int)
+
+        rare_encoder = RareLabelCategoricalEncoder(
+            tol=0.02 if len(X_train) < 100 else 0.01,
+            variables=['MostBoughtItem']).fit(X_train)
+        X_train = rare_encoder.transform(X_train)
+        X_test = rare_encoder.transform(X_test)
+        mean_enc = MeanCategoricalEncoder(variables=['MostBoughtItem']).fit(X_train, y_train)
+        X_train = mean_enc.transform(X_train)
+        X_test = mean_enc.transform(X_test)
+
+        if rfe:
+            sel_ = RFE(ModelClass(**kwargs), n_features_to_select=10)
+            sel_.fit(X_train, y_train)
+            selected_feats = X_train.columns[(sel_.get_support())]
+            model = ModelClass(**kwargs).fit(X_train[selected_feats], y_train)
+            train_results['X_train'].append(X_train[selected_feats])
+            train_results['X_test'].append(X_test[selected_feats])
+        else:
+            model = ModelClass(**kwargs)
+            model.fit(X_train, y_train)
+            train_results['X_train'].append(X_train)
+            train_results['X_test'].append(X_test)
         train_results['models'].append(model)
-        train_results['X_train'].append(X_train)
         train_results['y_train'].append(y_train)
-        train_results['X_test'].append(X_test)
         train_results['y_test'].append(y_test)
 
     return train_results
