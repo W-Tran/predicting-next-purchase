@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from dateutil.relativedelta import *
 
 
@@ -40,7 +39,7 @@ def add_revenue_column(invoices: pd.DataFrame) -> pd.DataFrame:
 
 def drop_test_invoices(invoices: pd.DataFrame) -> pd.DataFrame:
     invoices = invoices.copy()
-    test_invoice_indexs = invoices[invoices['StockCode'].str.contains('TEST', na=False)].index
+    test_invoice_indexs = invoices[invoices['StockCode'].str.contains('TEST', case=False, na=False)].index
     invoices = invoices.drop(index=test_invoice_indexs)
 
     return invoices
@@ -48,7 +47,7 @@ def drop_test_invoices(invoices: pd.DataFrame) -> pd.DataFrame:
 
 def drop_cancellation_invoices(invoices: pd.DataFrame) -> pd.DataFrame:
     invoices = invoices.copy()
-    cancellation_invoice_indexs = invoices[invoices.InvoiceNo.str.contains('c', na=False, case=False)].index
+    cancellation_invoice_indexs = invoices[invoices["InvoiceNo"].str.contains('c', na=False, case=False)].index
     invoices = invoices.drop(index=cancellation_invoice_indexs)
 
     return invoices
@@ -65,6 +64,18 @@ def drop_non_numeric_invoice_numbers(invoices: pd.DataFrame) -> pd.DataFrame:
     invoices = invoices.copy()
     invoices = invoices[pd.to_numeric(invoices['InvoiceNo'], errors='coerce').notna()]
     return invoices
+
+
+def clean_stock_codes(invoices):
+    invoices_copy = invoices.copy()
+    invoices_copy.drop(index=invoices_copy[invoices_copy.StockCode == 'C2'].index, inplace=True)
+    invoices_copy.drop(index=invoices_copy[invoices_copy.StockCode == 'C3'].index, inplace=True)
+    invoices_copy['StockCode'] = invoices_copy['StockCode'].str.replace("^\D+$", "Not an Item")
+    invoices_copy["StockCode"] = invoices_copy["StockCode"].str.replace("gift.*", "Not an Item")
+    invoices_copy.drop(index=invoices_copy[invoices_copy.StockCode == 'Not an Item'].index, inplace=True)
+    invoices_copy['StockCode'] = invoices_copy['StockCode'].str.replace("\D+$", "")
+
+    return invoices_copy
 
 
 def get_observation_end_dates(invoices: pd.DataFrame) -> list:
