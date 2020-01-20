@@ -3,6 +3,8 @@ import numpy as np
 from dateutil.relativedelta import *
 from lifetimes.utils import summary_data_from_transaction_data
 
+lag = 3  # How many months to train on?
+
 
 def train_split_invoices_into_calib_holdout(observation_period_end: pd.datetime, invoices: pd.DataFrame):
     calib_period_end = observation_period_end - relativedelta(months=1)
@@ -46,12 +48,11 @@ def get_aggregation_features(calib_invoices):
 def add_monetary_agg_features(features, calib_invoices):
     features = features.copy()
     calib_invoices = calib_invoices.copy()
-    calib_daily_revenues = calib_invoices.groupby(["CustomerID", calib_invoices["InvoiceDate"].dt.to_period("D")])[
+    calib_daily_revenues = calib_invoices.groupby(["CustomerID", pd.Grouper(key="InvoiceDate", freq="D")])[
         'Revenue'].sum().reset_index()
     calib_daily_revenues = calib_daily_revenues.sort_values(by=['CustomerID', 'InvoiceDate'])
 
     aggregation_features = calib_daily_revenues.groupby('CustomerID')['Revenue'].agg([
-        'mean',
         'std',
         'min',
         'max',
@@ -60,7 +61,6 @@ def add_monetary_agg_features(features, calib_invoices):
 
     aggregation_features.columns = [
         'CustomerID',
-        'MeanPurchaseValue',
         'StDevPurchaseValue',
         'MinPurchaseValue',
         'MaxPurchaseValue',
@@ -113,6 +113,28 @@ def add_uk_feature(features, calib_invoices):
     return features
 
 
+def add_season_feature(features, period_end):
+    features_copy = features.copy()
+    seasonal_months = ['September', 'October', 'November']
+    if period_end.strftime("%B") in seasonal_months:
+        features_copy['in_season'] = 1
+    else:
+        features_copy['in_season'] = 0
+
+    return features_copy
+
+
+def add_most_bought_item(features, calib_invoices):
+    features_copy = features.copy()
+    temp = calib_invoices.groupby("CustomerID")['StockCode'].value_counts().reset_index(
+        name='Counts').sort_values(['CustomerID', 'Counts'], ascending=False)
+    temp = temp.groupby("CustomerID")['StockCode'].first().reset_index()
+    temp.columns = ['CustomerID', 'MostBoughtItem']
+    features_copy = features_copy.merge(temp, how='left', on='CustomerID')
+
+    return features_copy
+
+
 def get_labels(features, calib_invoices, holdout_invoices, period_end):
     customer_last_calib_purchases = calib_invoices.groupby("CustomerID")['InvoiceDate'].max().reset_index()
     customer_first_holdout_purchases = holdout_invoices.groupby("CustomerID")['InvoiceDate'].min().reset_index()
@@ -127,7 +149,7 @@ def get_labels(features, calib_invoices, holdout_invoices, period_end):
     return labels
 
 
-def _get_train_test_data(invoices, observation_end_date):
+def get_train_test_data(invoices, observation_end_date):
     train_calib_invoices, train_holdout_invoices, train_calib_period_end = train_split_invoices_into_calib_holdout(
         observation_end_date, invoices)
     test_calib_invoices, test_holdout_invoices, test_calib_period_end = test_split_invoices_into_calib_holdout(
@@ -137,12 +159,16 @@ def _get_train_test_data(invoices, observation_end_date):
     train_features = add_monetary_agg_features(train_features, train_calib_invoices)
     train_features = add_rfm_features(train_features, train_calib_invoices, train_calib_period_end)
     train_features = add_uk_feature(train_features, train_calib_invoices)
+    train_features = add_most_bought_item(train_features, train_calib_invoices)
+    train_features = add_season_feature(train_features, train_calib_period_end)
     # train_features = add_cyclical_last_invoice_date_feature(train_features, train_calib_invoices)
 
     test_features = get_aggregation_features(test_calib_invoices)
     test_features = add_monetary_agg_features(test_features, test_calib_invoices)
     test_features = add_rfm_features(test_features, test_calib_invoices, test_calib_period_end)
     test_features = add_uk_feature(test_features, test_calib_invoices)
+    test_features = add_most_bought_item(test_features, test_calib_invoices)
+    test_features = add_season_feature(test_features, test_calib_period_end)
     # test_features = add_cyclical_last_invoice_date_feature(test_features, test_calib_invoices)
 
     train_labels = get_labels(train_features, train_calib_invoices, train_holdout_invoices, train_calib_period_end)
@@ -161,6 +187,7 @@ def get_naive_labels(invoices, observation_end_dates):
         y_train=[],
         y_test=[],
     )
+    train_naive_labels = []
 
     for observation_end_date in observation_end_dates:
         train_calib_invoices, _, _ = train_split_invoices_into_calib_holdout(observation_end_date, invoices)
@@ -170,7 +197,8 @@ def get_naive_labels(invoices, observation_end_dates):
         test_features = get_aggregation_features(test_calib_invoices)
 
         days_in_a_month = 30.4167
-        naive_labels['y_train'].append(train_features['MeanTimeBetweenPurchase'] < days_in_a_month)
+        train_naive_labels.append(train_features['MeanTimeBetweenPurchase'] < days_in_a_month)
+        naive_labels['y_train'].append(pd.concat(train_naive_labels[-lag:]))
         naive_labels['y_test'].append(test_features['MeanTimeBetweenPurchase'] < days_in_a_month)
 
     return naive_labels
