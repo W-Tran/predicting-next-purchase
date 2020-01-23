@@ -1,6 +1,6 @@
 # Predict purchases next month
 
-Using the same online retail dataset as [this project](https://github.com/W-Tran/online-retail), I instead build an ML classifier to predict whether a customer will purchase within the next month based on their daily aggregate monetary (amount) and temporal (frequency) purchase statistics. The data is split into monthly calibration/holdout sets where the previous month's transactions are used as training labels (features are built on all transactions leading up to the previous month) whilst the model is tested on next month's purchases which are unseen data.  
+Using the same online retail dataset as [this project](https://github.com/W-Tran/online-retail), I instead build an ML classifier to predict whether a customer will purchase within the next month based on their daily aggregate monetary and temporal purchase statistics. The data is split into monthly calibration/holdout sets where the previous month's transactions are used as training labels (features are built on all transactions leading up to the previous month) whilst the model is tested on next month's purchases which are unseen data.  
 
 The ML model is compared to a naive model baseline which predicts that all customers with a purchase frequency of less than a month will purchase again within the next month. A small lift in accuracy over the naive model is observed throughout the first and second year, however there is considerable lift over the naive model in precision after 1 year of data is used to train the model. 
 
