@@ -9,7 +9,7 @@ The rationale behind evaluating using precision is that we care most about True 
 
 **Notes/Future work**
 
-- Categorical features can be added to the feature set by taking into consideration what exactly a customer is buying and how that may relate to whether a customer will purchase within the next month. I am currently in the process of exploring NLP preprocessing methods to clean item descriptions/Stock codes as well as using categorical embeddings to encode items into features that may boost the performance of the ML model.
+- Item transaction history i.e. what exactly a customer is buying could have some predictive power. Explore using categorical embeddings to encode items into features that may boost the performance of the ML model.
 - Probabilistic [BTYD](https://en.wikipedia.org/wiki/Buy_Till_you_Die) [models](https://lifetimes.readthedocs.io/en/latest/) were explored extensively for use in this project. However most available packages were not able to deal with the heavy seasonality in the purchase behaviour of customers for this particular online retail (a gift shop which sees a huge surge in sales leading up to Christmas). Fitting BTYD model parameters without incorporating seasonality results in poor performance.
 - [Discrete Survival models](https://data.princeton.edu/wws509/notes/c7s6) were also explored for this project (inspired by [this talk](https://www.youtube.com/watch?v=uU1u6JQCg5U)) but also failed to perform well in predicting purchase behaviour. I also intend to study survival models a bit more in the future to explore ways in which they can be used for online retail settings.
 
