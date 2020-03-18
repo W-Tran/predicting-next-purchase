@@ -30,6 +30,7 @@ def train_models(ModelClass, invoices, observation_end_dates, rfe=False, **kwarg
             drop=True).astype(int)
         X_test, y_test = X_test.reset_index(drop=True), y_test.reset_index(drop=True).astype(int)
 
+        # Encode "MostBoughtItem" feature
         rare_encoder = RareLabelCategoricalEncoder(
             tol=0.02 if len(X_train) < 100 else 0.01,
             variables=['MostBoughtItem']).fit(X_train)
@@ -40,7 +41,7 @@ def train_models(ModelClass, invoices, observation_end_dates, rfe=False, **kwarg
         X_test = mean_enc.transform(X_test)
 
         if rfe:
-            sel_ = RFE(ModelClass(**kwargs), n_features_to_select=10)
+            sel_ = RFE(ModelClass(**kwargs), n_features_to_select=8)
             sel_.fit(X_train, y_train)
             selected_feats = X_train.columns[(sel_.get_support())]
             model = ModelClass(**kwargs).fit(X_train[selected_feats], y_train)
