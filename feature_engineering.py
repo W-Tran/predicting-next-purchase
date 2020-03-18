@@ -125,6 +125,9 @@ def add_season_feature(features, period_end):
 
 
 def add_most_bought_item(features, calib_invoices):
+    """
+    Add the customer's most bought item as a categorical feature. Will eventually be mean encoded
+    """
     features_copy = features.copy()
     temp = calib_invoices.groupby("CustomerID")['StockCode'].value_counts().reset_index(
         name='Counts').sort_values(['CustomerID', 'Counts'], ascending=False)
