@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, precision_score, classification_report
-from feature_engineering import get_train_test_data
+from .feature_engineering import get_train_test_data
 import scikitplot as skplt
 import pandas as pd
 from feature_engine.categorical_encoders import MeanCategoricalEncoder
