@@ -27,7 +27,7 @@ def train_models(ModelClass, invoices, observation_end_dates, rfe=False, **kwarg
         X_trains.append(X_train)
         y_trains.append(y_train)
         X_train, y_train = pd.concat(X_trains[-lag:]).reset_index(drop=True), pd.concat(y_trains[-lag:]).reset_index(
-            drop=True).astype(int)
+            drop=True).astype(int)  # Last "lag" months used as training data
         X_test, y_test = X_test.reset_index(drop=True), y_test.reset_index(drop=True).astype(int)
 
         # Encode "MostBoughtItem" feature
