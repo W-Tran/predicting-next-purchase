@@ -6,7 +6,9 @@
 </p>
 <p align="center"><img src="data/figures/single_month.png" width=800></p>
 
-Using the same online retail dataset as [this project](https://github.com/W-Tran/online-retail), I instead built an ML classifier to predict whether a customer will purchase within the next month based on their daily aggregate monetary and temporal purchase statistics. The data is split into monthly calibration/holdout sets where the previous 3 month's transactions are used as training labels whilst the next month's purchases, which are unseen data, are used to evaluate the model.  
+Using the same dataset and daily aggregation statistics as in the [Customer Segmentation project](https://github.com/W-Tran/online-retail), I instead built a ML classifier to predict whether a particular customer will purchase within the next month. The data is split into holdout and calibration sets, akin to time series cross validation, to avoid data leakage. 
+ 
+Specifically, I selected cut-off points at the beginning of each month which I call observation end dates. All transactions before the observation end date are used to train the model and build the test features, whilst the transactions after the observation end date are used as the test labels, 1 if the customer purchased within the next month, 0 otherwise.
 
 The model is compared to a naive baseline which predicts that all customers with a purchase frequency of less than a month will purchase again within the next month. A small lift in accuracy over the naive model is observed throughout the first and second year, however there is considerable lift over the naive model in precision after 1 year of data is used to train the model. 
 
