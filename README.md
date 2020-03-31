@@ -17,10 +17,8 @@ The rationale behind evaluating using precision is that we care most about True 
 
 **Notes/Future work**
 
-- Item transaction history i.e. what exactly a customer is buying could have some predictive power. Explore using categorical embeddings to encode items into features that may boost the performance of the ML model.
-- Probabilistic [BTYD](https://en.wikipedia.org/wiki/Buy_Till_you_Die) [models](https://lifetimes.readthedocs.io/en/latest/) were explored extensively for use in this project. However most available packages were not able to deal with the heavy seasonality in the purchase behaviour of customers for this particular online retail (a gift shop which sees a huge surge in sales leading up to Christmas). Fitting BTYD model parameters without incorporating seasonality results in poor performance.
-- [Discrete Survival models](https://data.princeton.edu/wws509/notes/c7s6) were also explored for this project (inspired by [this talk](https://www.youtube.com/watch?v=uU1u6JQCg5U)) but also failed to perform well in predicting purchase behaviour. I also intend to study survival models a bit more in the future to explore ways in which they can be used for online retail settings.
-
+- Probabilistic [BTYD](https://en.wikipedia.org/wiki/Buy_Till_you_Die) [models](https://lifetimes.readthedocs.io/en/latest/) were explored for use in this project. However most available packages were not able to deal with the heavy seasonality in the purchase behaviour for this particular online retail (a gift shop which sees a huge surge in sales leading up to Christmas).
+- [Discrete Survival models](https://data.princeton.edu/wws509/notes/c7s6) were also explored for use in this project (inspired by [this talk](https://www.youtube.com/watch?v=uU1u6JQCg5U)) but also failed to perform well in predicting purchase behaviour. Study survival models a bit more in the future to explore ways in which they can be used for online retail settings.
 
 ## Installation
 
