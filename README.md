@@ -1,4 +1,4 @@
-# Predict purchases next month
+# Predict next purchase month
 
 <p align="center">
   <img src="data/figures/accuracy.png" width="400">
